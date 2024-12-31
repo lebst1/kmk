@@ -50,7 +50,7 @@ cursor.execute('''
 
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS telegram_users
-    (id INTEGER PRIMARY KEY, username TEXT)
+    (id INTEGER PRIMARY KEY, username TEXT, first_name TEXT)
 ''')
 
 conn.commit()
@@ -97,7 +97,7 @@ remove_word = ''
 async def send_welcome(message: types.Message):
     cursor.execute('SELECT * FROM telegram_users WHERE id = ?', (message.from_user.id,))
     if cursor.fetchone() is None:
-        cursor.execute('INSERT INTO telegram_users (id, username) VALUES (?, ?)', (message.from_user.id, message.from_user.username))
+        cursor.execute('INSERT INTO telegram_users (id, username, first_name) VALUES (?, ?, ?)', (message.from_user.id, message.from_user.username, message.from_user.first_name))
         conn.commit()
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add(types.KeyboardButton('📨 Отправить сообщение'))
@@ -185,10 +185,10 @@ async def top(message: types.Message):
     top_users = cursor.fetchall()
     text = '📈 Всеобщий топ:\n'
     for i, user in enumerate(top_users):
-        cursor.execute('SELECT username FROM telegram_users WHERE id = ?', (user[0],))
-        username = cursor.fetchone()
-        if username is not None:
-            text += f'{i+1}. @{username[0]} - {user[1]} публичных сообщений\n'
+        cursor.execute('SELECT first_name FROM telegram_users WHERE id = ?', (user[0],))
+        first_name = cursor.fetchone()
+        if first_name is not None:
+            text += f'{i+1}. {first_name[0]} - {user[1]} публичных сообщений\n'
         else:
             text += f'{i+1}. Пользователь не найден - {user[1]} публичных сообщений\n'
     await bot.send_message(CHANNEL_ID, text)
